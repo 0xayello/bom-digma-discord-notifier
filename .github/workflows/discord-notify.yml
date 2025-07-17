@@ -20,7 +20,7 @@ jobs:
           node-version: '16'
 
       - name: Instalar dependências
-        run: npm ci
+        run: npm install
 
       - name: Executar script de notificação
         env:
