@@ -1,10 +1,10 @@
 name: "RSS → Discord Notifier"
 
-# Agendamento: todo dia às 09:00 UTC (ajuste o cron se quiser outro horário)
+# Dispara todo dia às 09:00 UTC — ajuste o cron se desejar outro horário
 on:
   schedule:
-    - cron:  '0 9 * * *'
-  workflow_dispatch:  # permite rodar manualmente
+    - cron: '0 9 * * *'
+  workflow_dispatch: # permite rodar manualmente
 
 jobs:
   notify:
@@ -14,7 +14,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v3
 
-      - name: Configurar Node.js
+      - name: Instalar Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
@@ -22,7 +22,8 @@ jobs:
       - name: Instalar dependências
         run: npm install
 
-      - name: Executar script de notificação
+      - name: Executar notifier
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ROLE_ID:    ${{ secrets.DISCORD_ROLE_ID }}
         run: npm start
