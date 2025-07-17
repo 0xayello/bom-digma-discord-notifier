@@ -1,28 +1,25 @@
 name: "RSS → Discord Notifier"
 
-# Dispara todo dia às 09:00 UTC — ajuste o cron se desejar outro horário
 on:
   schedule:
     - cron: '0 9 * * *'
-  workflow_dispatch: # permite rodar manualmente
+  workflow_dispatch:
 
 jobs:
   notify:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout do código
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Instalar Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-      - name: Instalar dependências
+      - name: Install dependencies
         run: npm install
 
-      - name: Executar notifier
+      - name: Run notifier
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_ROLE_ID:    ${{ secrets.DISCORD_ROLE_ID }}
