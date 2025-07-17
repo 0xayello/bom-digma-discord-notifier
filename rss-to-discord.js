@@ -30,16 +30,23 @@ async function fetchLatestPost() {
 async function notifyDiscord({ title, summary, link }) {
   if (!WEBHOOK) throw new Error('Missing DISCORD_WEBHOOK_URL');
 
-  // Formatação exata conforme exemplo:
-  // Primeira linha: **🆕 Título** @Leitor
-  // Linha em branco, subtítulo sem negrito
-  // Linha em branco, 👇 Confira a edição completa aqui: link
-  let content = `**🆕 ${title}**`;
-  if (ROLE_ID) content += ` <@&${ROLE_ID}>`;
-  content += `\n\n${summary}`;
-  content += `\n\n👇 Confira a edição completa aqui: ${link}`;
+  // Monta mensagem de texto sem template literals para evitar syntax errors
+  let content = "**🆕 " + title + "**";
+  if (ROLE_ID) {
+    content += " <@&" + ROLE_ID + ">";
+  }
+  content += "
+
+" + summary;
+  content += "
+
+👇 Confira a edição completa aqui: " + link;
 
   await axios.post(WEBHOOK, {
+    content,
+    allowed_mentions: { roles: ROLE_ID ? [ROLE_ID] : [] }
+  });
+}(WEBHOOK, {
     content,
     allowed_mentions: { roles: ROLE_ID ? [ROLE_ID] : [] }
   });
