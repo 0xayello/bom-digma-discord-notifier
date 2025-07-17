@@ -1,4 +1,3 @@
-```javascript
 require('dotenv').config();
 const Parser = require('rss-parser');
 const axios  = require('axios');
@@ -78,4 +77,3 @@ async function run() {
 }
 
 if (require.main === module) run();
-```
