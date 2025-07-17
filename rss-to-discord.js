@@ -1,17 +1,18 @@
+```javascript
 require('dotenv').config();
 const Parser = require('rss-parser');
 const axios  = require('axios');
 const fs     = require('fs');
 const path   = require('path');
 
-// CONFIG
+// CONFIGURAÇÃO
 const FEED_URL   = 'https://www.bomdigma.com.br/feed';
 const CACHE_FILE = path.resolve(__dirname, 'last_discord_item.txt');
-const ROLE_ID    = process.env.DISCORD_ROLE_ID;  
-const WEBHOOK    = process.env.DISCORD_WEBHOOK_URL;
+const ROLE_ID    = process.env.DISCORD_ROLE_ID;      // ex: '123456789012345678'
+const WEBHOOK    = process.env.DISCORD_WEBHOOK_URL;  // URL do seu webhook
 
-// DEBUG: confirma que as vars chegam via Actions
-console.log('▶️ Starting notifier');
+// DEBUG: confirma se variáveis de ambiente foram carregadas
+console.log('▶️ Notifier start');
 console.log('   WEBHOOK:', !!WEBHOOK);
 console.log('   ROLE_ID:', ROLE_ID);
 
@@ -27,22 +28,23 @@ async function setLastNotifiedLink(link) {
 
 async function fetchLatestPost() {
   const parser = new Parser();
-  const { items } = await parser.parseURL(FEED_URL);
-  return items[0];
+  const feed   = await parser.parseURL(FEED_URL);
+  return feed.items[0];
 }
 
 async function notifyDiscord({ title, summary, link }) {
   if (!WEBHOOK) throw new Error('Missing DISCORD_WEBHOOK_URL');
-  const content = ROLE_ID ? `<@&${ROLE_ID}>` : null;
-  const embed = {
-    title:       `📝 Nova edição: ${title}`,
-    description: summary.substring(0, 200) + '…',
-    url:         link,
-    timestamp:   new Date().toISOString(),
-    footer:      { text: 'bomdigma.com.br' }
-  };
+
+  // Prepara o texto para gerar link preview automático
+  let content = '';
+  if (ROLE_ID) content += `<@&${ROLE_ID}> `;      // menciona role @Leitor
+  content += `📝 Novo Bom Digma:\n`;
+  content += `${title}\n`;
+  content += `${summary.substring(0, 200)}…\n`;
+  content += `${link}`;                            // link gera embed com capa
+
   await axios.post(WEBHOOK, {
-    content, embeds: [embed],
+    content,
     allowed_mentions: { roles: ROLE_ID ? [ROLE_ID] : [] }
   });
 }
@@ -51,17 +53,22 @@ async function run() {
   try {
     const latest   = await fetchLatestPost();
     const lastLink = await getLastNotifiedLink();
+
+    // Evita republicar
     if (latest.link === lastLink) {
       console.log('🛑 Sem novidades. Abortando.');
       return;
     }
+
+    // Executa notificação
     await notifyDiscord({
       title:   latest.title,
       summary: latest.contentSnippet || '',
       link:    latest.link
     });
+
     await setLastNotifiedLink(latest.link);
-    console.log('✅ Notificação enviada!');
+    console.log('✅ Notificação enviada com sucesso!');
   } catch (err) {
     console.error('❌ Erro:', err.message);
     process.exit(1);
@@ -69,3 +76,4 @@ async function run() {
 }
 
 if (require.main === module) run();
+```
