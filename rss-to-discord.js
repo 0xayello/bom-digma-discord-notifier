@@ -29,7 +29,7 @@ async function notifyDiscord({ title, summary, link }) {
   if (!WEBHOOK) throw new Error('Missing DISCORD_WEBHOOK_URL');
 
   // Formatação exata conforme exemplo:
-  let content = "**🆕 " + title + "**";
+  let content = "**" + title + "**";
   if (ROLE_ID) {
     content += " <@&" + ROLE_ID + ">";
   }
