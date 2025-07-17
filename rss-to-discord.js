@@ -11,9 +11,8 @@ const ROLE_ID    = process.env.DISCORD_ROLE_ID;      // ID da role @Leitor
 const WEBHOOK    = process.env.DISCORD_WEBHOOK_URL;  // URL do seu Webhook
 
 async function getLastNotifiedLink() {
-  return fs.existsSync(CACHE_FILE)
-    ? fs.readFileSync(CACHE_FILE, 'utf-8').trim()
-    : null;
+  if (!fs.existsSync(CACHE_FILE)) return null;
+  return fs.readFileSync(CACHE_FILE, 'utf-8').trim();
 }
 
 async function setLastNotifiedLink(link) {
@@ -29,25 +28,19 @@ async function fetchLatestPost() {
 async function notifyDiscord({ title, summary, link }) {
   if (!WEBHOOK) throw new Error('Missing DISCORD_WEBHOOK_URL');
 
-  // Monta mensagem de texto sem template literals para evitar syntax errors
+  // Formatação exata conforme exemplo:
   let content = "**🆕 " + title + "**";
   if (ROLE_ID) {
     content += " <@&" + ROLE_ID + ">";
   }
-  content += "
-
-" + summary;
-  content += "
-
-👇 Confira a edição completa aqui: " + link;
+  content += "\n\n" + summary;
+  content += "\n\n👇 Confira a edição completa aqui: " + link;
 
   await axios.post(WEBHOOK, {
     content,
-    allowed_mentions: { roles: ROLE_ID ? [ROLE_ID] : [] }
-  });
-}(WEBHOOK, {
-    content,
-    allowed_mentions: { roles: ROLE_ID ? [ROLE_ID] : [] }
+    allowed_mentions: {
+      roles: ROLE_ID ? [ROLE_ID] : []
+    }
   });
 }
 
