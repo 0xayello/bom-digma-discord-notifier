@@ -1,3 +1,4 @@
+```javascript
 require('dotenv').config();
 const Parser = require('rss-parser');
 const axios  = require('axios');
@@ -7,13 +8,8 @@ const path   = require('path');
 // CONFIGURAÇÃO
 const FEED_URL   = 'https://www.bomdigma.com.br/feed';
 const CACHE_FILE = path.resolve(__dirname, 'last_discord_item.txt');
-const ROLE_ID    = process.env.DISCORD_ROLE_ID;      // ex: '123456789012345678'
-const WEBHOOK    = process.env.DISCORD_WEBHOOK_URL;  // URL do seu webhook
-
-// DEBUG: confirma se variáveis foram carregadas
-console.log('▶️ Notifier start');
-console.log('   WEBHOOK present:', !!WEBHOOK);
-console.log('   ROLE_ID:', ROLE_ID);
+const ROLE_ID    = process.env.DISCORD_ROLE_ID;      // ID da role @Leitor
+const WEBHOOK    = process.env.DISCORD_WEBHOOK_URL;  // URL do seu Webhook
 
 async function getLastNotifiedLink() {
   return fs.existsSync(CACHE_FILE)
@@ -34,15 +30,14 @@ async function fetchLatestPost() {
 async function notifyDiscord({ title, summary, link }) {
   if (!WEBHOOK) throw new Error('Missing DISCORD_WEBHOOK_URL');
 
-  // Monta mensagem em texto para gerar preview
-  let content = '';
-  if (ROLE_ID) {
-    content += '<@&' + ROLE_ID + '> ';
-  }
-  content += '📝 Novo Bom Digma:\n';
-  content += title + '\n';
-  content += summary.substring(0, 200) + '…\n';
-  content += link;
+  // Formatação exata conforme exemplo:
+  // Primeira linha: **🆕 Título** @Leitor
+  // Linha em branco, subtítulo sem negrito
+  // Linha em branco, 👇 Confira a edição completa aqui: link
+  let content = `**🆕 ${title}**`;
+  if (ROLE_ID) content += ` <@&${ROLE_ID}>`;
+  content += `\n\n${summary}`;
+  content += `\n\n👇 Confira a edição completa aqui: ${link}`;
 
   await axios.post(WEBHOOK, {
     content,
@@ -76,3 +71,4 @@ async function run() {
 }
 
 if (require.main === module) run();
+```
