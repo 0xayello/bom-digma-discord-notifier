@@ -13,14 +13,7 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v3
         with:
-          persist-credentials: false
-
-      - name: Restore last link cache
-        uses: actions/cache@v3
-        id: cache-link
-        with:
-          path: last_discord_item.txt
-          key: rss-discord-cache
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -37,9 +30,11 @@ jobs:
           DISCORD_ROLE_ID:    ${{ secrets.DISCORD_ROLE_ID }}
         run: npm start
 
-      - name: Save last link cache
+      - name: Commit cache de link
         if: steps.run_notifier.outcome == 'success'
-        uses: actions/cache@v3
-        with:
-          path: last_discord_item.txt
-          key: rss-discord-cache
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add last_discord_item.txt
+          git diff --cached --quiet || git commit -m "chore: update last_discord_item cache"
+          git push origin HEAD:main
