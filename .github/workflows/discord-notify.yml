@@ -1,35 +1,25 @@
 name: "RSS → Discord Notifier"
 
+# 1) Garanta permissão de escrita para o GITHUB_TOKEN
+permissions:
+  contents: write
+
 on:
   schedule:
-    - cron: '0 12 * * *'    # 9 AM BRT = 12 UTC
+    - cron: '0 12 * * *'
   workflow_dispatch:
 
 jobs:
   notify:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout do código
         uses: actions/checkout@v3
         with:
-          persist-credentials: true   # mantém token para git push
-          fetch-depth: 0             # traz todo o histórico, necessário p/ push
+          persist-credentials: true
+          fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run notifier
-        id: run_notifier
-        run: node rss-to-discord.js
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_ROLE_ID:    ${{ secrets.DISCORD_ROLE_ID }}
+      # … resto dos passos (Setup Node.js, Install dependencies, Run notifier) …
 
       - name: Commit cache de link
         if: steps.run_notifier.outcome == 'success'
