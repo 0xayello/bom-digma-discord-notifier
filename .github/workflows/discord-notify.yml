@@ -2,15 +2,18 @@ name: "RSS → Discord Notifier"
 
 on:
   schedule:
-    - cron: '0 12 * * *'
-  
+    - cron: '0 12 * * *'    # 9 AM BRT = 12 UTC
   workflow_dispatch:
 
 jobs:
   notify:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout do código
+        uses: actions/checkout@v3
+        with:
+          persist-credentials: true   # necessário para permitir push no passo de commit
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -21,7 +24,23 @@ jobs:
         run: npm install
 
       - name: Run notifier
+        id: run_notifier
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_ROLE_ID:    ${{ secrets.DISCORD_ROLE_ID }}
         run: npm start
+
+      - name: Commit cache de link
+        if: steps.run_notifier.outcome == 'success'
+        run: |
+          # Configura usuário de commit
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Adiciona e comita alterações em last_discord_item.txt
+          git add last_discord_item.txt
+          # Somente commita se houver mudanças
+          git diff --cached --quiet || git commit -m "chore: update last_discord_item cache"
+
+          # Envia para o repositório
+          git push
