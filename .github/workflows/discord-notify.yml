@@ -10,31 +10,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Faz checkout com credenciais e histórico completos para permitir push
       - name: Checkout do código
         uses: actions/checkout@v3
         with:
           persist-credentials: true
+          fetch-depth: 0
 
+      # 2. Prepara o Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
 
+      # 3. Instala dependências
       - name: Install dependencies
         run: npm install
 
+      # 4. Executa o notifier (que lê e atualiza last_discord_item.txt)
       - name: Run notifier
         id: run_notifier
+        run: node rss-to-discord.js
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_ROLE_ID:    ${{ secrets.DISCORD_ROLE_ID }}
-        run: npm start
 
+      # 5. Caso tenha postado, commita de volta o last_discord_item.txt para o repo
       - name: Commit cache de link
         if: steps.run_notifier.outcome == 'success'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add last_discord_item.txt
-          git diff --cached --quiet || git commit -m "chore: update last_discord_item cache"
-          git push origin HEAD:main
+          git commit -m "chore: update last_discord_item cache" || echo "Sem alterações no cache"
+          git push
