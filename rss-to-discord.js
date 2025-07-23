@@ -8,10 +8,10 @@ const path   = require('path');
 const FEED_URL        = 'https://www.bomdigma.com.br/feed';
 const CACHE_FILE      = path.resolve(__dirname, 'last_discord_item.txt');
 const DATE_CACHE_FILE = path.resolve(__dirname, 'last_discord_date.txt');
-const ROLE_ID         = process.env.DISCORD_ROLE_ID;      // ex: '123456789012345678'
-const WEBHOOK         = process.env.DISCORD_WEBHOOK_URL;  // sua URL de webhook
+const ROLE_ID         = process.env.DISCORD_ROLE_ID;
+const WEBHOOK         = process.env.DISCORD_WEBHOOK_URL;
 
-// Caches para não repetir post
+// Helpers de cache
 function getLastNotifiedLink() {
   return fs.existsSync(CACHE_FILE)
     ? fs.readFileSync(CACHE_FILE, 'utf-8').trim()
@@ -36,7 +36,7 @@ async function fetchLatestPost() {
   return feed.items[0];
 }
 
-// Envia a mensagem no Discord
+// Monta e envia mensagem no Discord
 async function notifyDiscord({ title, summary, link }) {
   if (!WEBHOOK) throw new Error('Missing DISCORD_WEBHOOK_URL');
 
@@ -51,13 +51,21 @@ async function notifyDiscord({ title, summary, link }) {
   });
 }
 
-// Fluxo principal
+// Função principal com DEBUG
 async function run() {
   try {
-    const latest   = await fetchLatestPost();
-    const lastLink = getLastNotifiedLink();
-    const pubDate  = new Date(latest.isoDate || latest.pubDate);
-    const lastDate = getLastNotifiedDate();
+    const latest    = await fetchLatestPost();
+    const lastLink  = getLastNotifiedLink();
+    const pubDate   = new Date(latest.isoDate || latest.pubDate);
+    const lastDate  = getLastNotifiedDate();
+
+    // --- DEBUG OUTPUT ---
+    console.log('▶️ Notifier start');
+    console.log('latest.link  =', latest.link);
+    console.log('lastLink     =', lastLink);
+    console.log('pubDate      =', pubDate.toISOString());
+    console.log('lastDate     =', lastDate ? lastDate.toISOString() : null);
+    console.log('WEBHOOK ok   =', !!WEBHOOK, ' ROLE_ID =', ROLE_ID);
 
     // Abortamos se já postamos este link OU esta data já foi processada
     if (latest.link === lastLink || (lastDate && pubDate <= lastDate)) {
@@ -65,14 +73,12 @@ async function run() {
       return;
     }
 
-    // Caso seja de fato uma edição nova...
+    // Publica e atualiza caches
     await notifyDiscord({
       title:   latest.title,
       summary: latest.contentSnippet || '',
       link:    latest.link
     });
-
-    // Atualiza caches
     setLastNotifiedLink(latest.link);
     setLastNotifiedDate(pubDate.toISOString());
     console.log('✅ Notificação enviada com sucesso!');
