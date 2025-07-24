@@ -4,7 +4,7 @@ on:
   # Dispara todo dia às 09:00 BRT (12:00 UTC)
   schedule:
     - cron: '0 12 * * *'
-  workflow_dispatch:  # permite disparo manual
+  workflow_dispatch:
 
 jobs:
   notify:
