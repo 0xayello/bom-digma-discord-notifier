@@ -1,7 +1,7 @@
 name: "RSS → Discord Notifier"
 
 on:
-  # 09:00 BRT é 12:00 UTC
+  # Dispara todo dia às 09:00 BRT (12:00 UTC)
   schedule:
     - cron: '0 12 * * *'
   workflow_dispatch:
@@ -27,15 +27,7 @@ jobs:
         run: npm install
 
       - name: Run notifier
-        id: notifier
-        run: npm start
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-
-      - name: Commit updated cache
-        if: steps.notifier.outcome == 'success'
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: chore: update last_discord_item cache [skip ci]
-          file_pattern: last_discord_item.txt
-          branch: main
+          GITHUB_TOKEN:        ${{ secrets.GITHUB_TOKEN }}
+        run: npm start
