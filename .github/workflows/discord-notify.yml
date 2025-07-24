@@ -1,17 +1,22 @@
 name: "RSS → Discord Notifier"
 
 on:
+  # Dispara todo dia às 09:00 BRT (12:00 UTC)
   schedule:
-    - cron: '0 12 * * *'    # todo dia às 09:00 BRT (12:00 UTC)
-  workflow_dispatch:
+    - cron: '0 12 * * *'
+  workflow_dispatch:  # permite disparo manual
 
 jobs:
   notify:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout do código
+        uses: actions/checkout@v3
         with:
-          persist-credentials: true  # permite push do cache
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
