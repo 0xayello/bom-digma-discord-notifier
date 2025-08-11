@@ -61,7 +61,7 @@ async function run() {
     const todayBR     = new Date()
       .toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
     if (postDateBR !== todayBR) {
-      console.log(🛑 Edição de ${postDateBR} não é de hoje (${todayBR}). Abortando.);
+      console.log(`🛑 Edição de ${postDateBR} não é de hoje (${todayBR}). Abortando.`);
       return;
     }
 
