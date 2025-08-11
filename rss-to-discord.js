@@ -1,3 +1,4 @@
+// rss-to-discord.js
 require('dotenv').config();
 const Parser = require('rss-parser');
 const axios  = require('axios');
@@ -9,7 +10,7 @@ const FEED_URL    = 'https://www.bomdigma.com.br/feed';
 const CACHE_FILE  = path.resolve(__dirname, 'last_discord_item.txt');
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
-// 👉 NOVO: ID do cargo "Leitor" (adicione no .env)
+// 👉 NOVO: ID do cargo "Leitor" (obrigatório)
 const LEITOR_ROLE_ID = process.env.DISCORD_LEITOR_ROLE_ID;
 
 // Função: lê último link notificado
@@ -27,26 +28,27 @@ function setLastNotifiedLink(link) {
 async function fetchLatestPost() {
   const parser = new Parser();
   const feed   = await parser.parseURL(FEED_URL);
-  return feed.items[0];
+  return feed.items?.[0];
 }
 
 // Função: publica no Discord
 async function notifyDiscord({ title, summary, link }) {
-  if (!WEBHOOK_URL) throw new Error('Missing DISCORD_WEBHOOK_URL');
-  if (!LEITOR_ROLE_ID) throw new Error('Missing DISCORD_LEITOR_ROLE_ID');
+  if (!WEBHOOK_URL)      throw new Error('Missing DISCORD_WEBHOOK_URL');
+  if (!LEITOR_ROLE_ID)   throw new Error('Missing DISCORD_LEITOR_ROLE_ID');
 
-  // 👇 menção de cargo precisa ser <@&ROLE_ID>
-  const content = `<@&${LEITOR_ROLE_ID}> **${title}**`
-                + `\n\n${summary || ''}`
-                + `\n\n👇 Confira a edição completa aqui: ${link}`;
+  // Menção de cargo precisa ser <@&ROLE_ID>
+  const content =
+    `<@&${LEITOR_ROLE_ID}> **${title}**` +
+    `\n\n${summary || ''}` +
+    `\n\n👇 Confira a edição completa aqui: ${link}`;
 
   await axios.post(WEBHOOK_URL, {
     content,
-    // 👇 libera só esse cargo para ser “pingado”
+    // Libera APENAS esse cargo para ping
     allowed_mentions: {
-      parse: [],                // não parseia @everyone/@here nem usuários
-      roles: [LEITOR_ROLE_ID],  // permite mencionar APENAS este cargo
-      users: []
+      parse: [],                // não parseia @everyone/@here
+      roles: [LEITOR_ROLE_ID],  // permite mencionar somente este cargo
+      users: []                 // não menciona usuários
     }
   });
 }
@@ -54,18 +56,23 @@ async function notifyDiscord({ title, summary, link }) {
 async function run() {
   try {
     const latest = await fetchLatestPost();
+    if (!latest) {
+      console.log('🛑 Nenhum item retornado no feed. Abortando.');
+      return;
+    }
 
-    // — 1) Date guard: só publica se a data do post for igual à data de hoje em BRT
-    const postDateBR  = new Date(latest.isoDate)
+    // — 1) Publica só se a data do post for hoje (BRT)
+    const postDateBR = new Date(latest.isoDate)
       .toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const todayBR     = new Date()
+    const todayBR = new Date()
       .toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
     if (postDateBR !== todayBR) {
       console.log(`🛑 Edição de ${postDateBR} não é de hoje (${todayBR}). Abortando.`);
       return;
     }
 
-    // — 2) Cache guard
+    // — 2) Evita republicar o mesmo link
     const lastLink = getLastNotifiedLink();
     if (latest.link === lastLink) {
       console.log('🛑 Mesma edição já publicada hoje. Abortando.');
@@ -82,9 +89,8 @@ async function run() {
     // — 4) Atualiza o cache
     setLastNotifiedLink(latest.link);
     console.log('✅ Notificação enviada e cache atualizado!');
-
   } catch (err) {
-    console.error('❌ Erro completo:', err.stack);
+    console.error('❌ Erro completo:', err.stack || err.message);
     process.exit(1);
   }
 }
