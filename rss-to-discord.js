@@ -8,7 +8,9 @@ const path   = require('path');
 const FEED_URL    = 'https://www.bomdigma.com.br/feed';
 const CACHE_FILE  = path.resolve(__dirname, 'last_discord_item.txt');
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
-const ROLE_ID     = process.env.DISCORD_ROLE_ID; // <- ID numérico da role @Leitor
+
+// 👉 NOVO: ID do cargo "Leitor" (adicione no .env)
+const LEITOR_ROLE_ID = process.env.DISCORD_LEITOR_ROLE_ID;
 
 // Função: lê último link notificado
 function getLastNotifiedLink() {
@@ -31,17 +33,21 @@ async function fetchLatestPost() {
 // Função: publica no Discord
 async function notifyDiscord({ title, summary, link }) {
   if (!WEBHOOK_URL) throw new Error('Missing DISCORD_WEBHOOK_URL');
+  if (!LEITOR_ROLE_ID) throw new Error('Missing DISCORD_LEITOR_ROLE_ID');
 
-  // título em negrito + menção da role (se houver), subtítulo e link
-  let content = '**' + title + '**';
-  if (ROLE_ID) content += ' <@&' + ROLE_ID + '>';
-  content += '\n\n' + (summary || '');
-  content += '\n\n👇 Confira a edição completa aqui: ' + link;
+  // 👇 menção de cargo precisa ser <@&ROLE_ID>
+  const content = `<@&${LEITOR_ROLE_ID}> **${title}**`
+                + `\n\n${summary || ''}`
+                + `\n\n👇 Confira a edição completa aqui: ${link}`;
 
   await axios.post(WEBHOOK_URL, {
     content,
-    // só permite pingar essa role; se ROLE_ID não existir, não menciona ninguém
-    allowed_mentions: ROLE_ID ? { roles: [ROLE_ID] } : { users: [], roles: [] }
+    // 👇 libera só esse cargo para ser “pingado”
+    allowed_mentions: {
+      parse: [],                // não parseia @everyone/@here nem usuários
+      roles: [LEITOR_ROLE_ID],  // permite mencionar APENAS este cargo
+      users: []
+    }
   });
 }
 
@@ -55,11 +61,11 @@ async function run() {
     const todayBR     = new Date()
       .toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
     if (postDateBR !== todayBR) {
-      console.log(`🛑 Edição de ${postDateBR} não é de hoje (${todayBR}). Abortando.`);
+      console.log(🛑 Edição de ${postDateBR} não é de hoje (${todayBR}). Abortando.);
       return;
     }
 
-    // — 2) Cache guard: evita republicar o mesmo link (mesmo dia/manual rerun)
+    // — 2) Cache guard
     const lastLink = getLastNotifiedLink();
     if (latest.link === lastLink) {
       console.log('🛑 Mesma edição já publicada hoje. Abortando.');
