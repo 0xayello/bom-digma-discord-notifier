@@ -1,7 +1,7 @@
 name: "RSS → Discord Notifier"
 
 on:
-  # Dispara todo dia às 09:00 BRT (12:00 UTC)
+  # Dispara todo dia às 09:00 BRT (12:00 UTC)
   schedule:
     - cron: '0 12 * * *'
   workflow_dispatch:
@@ -28,6 +28,7 @@ jobs:
 
       - name: Run notifier
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          GITHUB_TOKEN:        ${{ secrets.GITHUB_TOKEN }}
+          DISCORD_WEBHOOK_URL:    ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_LEITOR_ROLE_ID: ${{ secrets.DISCORD_LEITOR_ROLE_ID }} # novo
+          DISCORD_ROLE_ID:        ${{ secrets.DISCORD_ROLE_ID }}        # opcional (fallback)
         run: npm start
