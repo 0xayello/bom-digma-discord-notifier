@@ -8,6 +8,7 @@ const path   = require('path');
 const FEED_URL    = 'https://www.bomdigma.com.br/feed';
 const CACHE_FILE  = path.resolve(__dirname, 'last_discord_item.txt');
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+const ROLE_ID     = process.env.DISCORD_ROLE_ID; // <- ID numérico da role @Leitor
 
 // Função: lê último link notificado
 function getLastNotifiedLink() {
@@ -30,12 +31,17 @@ async function fetchLatestPost() {
 // Função: publica no Discord
 async function notifyDiscord({ title, summary, link }) {
   if (!WEBHOOK_URL) throw new Error('Missing DISCORD_WEBHOOK_URL');
-  const content = '**' + title + '**'
-                + '\n\n' + summary
-                + '\n\n👇 Confira a edição completa aqui: ' + link;
+
+  // título em negrito + menção da role (se houver), subtítulo e link
+  let content = '**' + title + '**';
+  if (ROLE_ID) content += ' <@&' + ROLE_ID + '>';
+  content += '\n\n' + (summary || '');
+  content += '\n\n👇 Confira a edição completa aqui: ' + link;
+
   await axios.post(WEBHOOK_URL, {
     content,
-    allowed_mentions: { users: [], roles: [] }
+    // só permite pingar essa role; se ROLE_ID não existir, não menciona ninguém
+    allowed_mentions: ROLE_ID ? { roles: [ROLE_ID] } : { users: [], roles: [] }
   });
 }
 
