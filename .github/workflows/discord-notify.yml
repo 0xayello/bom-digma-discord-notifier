@@ -26,9 +26,24 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Carregar cache do último item publicado
+        uses: actions/cache@v3
+        id: cache-last-item
+        with:
+          path: last_discord_item.txt
+          key: last-discord-item-v1
+
       - name: Run notifier
         env:
           DISCORD_WEBHOOK_URL:    ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_LEITOR_ROLE_ID: ${{ secrets.DISCORD_LEITOR_ROLE_ID }} # novo
           DISCORD_ROLE_ID:        ${{ secrets.DISCORD_ROLE_ID }}        # opcional (fallback)
+          DEBUG:                  ${{ secrets.DEBUG || 'false' }}
         run: npm start
+
+      - name: Salvar cache do último item publicado
+        uses: actions/cache@v3
+        if: always()
+        with:
+          path: last_discord_item.txt
+          key: last-discord-item-v1

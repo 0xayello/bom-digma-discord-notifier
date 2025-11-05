@@ -71,12 +71,35 @@ async function run() {
       return;
     }
 
-    // Só publica se a data for hoje (BRT)
-    const postDateBR = new Date(latest.isoDate)
-      .toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    const todayBR = new Date()
-      .toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    // Log do item encontrado para debug
+    console.log('📰 Item mais recente encontrado:');
+    console.log(`   Título: ${latest.title}`);
+    console.log(`   Link: ${latest.link}`);
+    console.log(`   isoDate: ${latest.isoDate || 'não disponível'}`);
+    console.log(`   pubDate: ${latest.pubDate || 'não disponível'}`);
 
+    // Usa isoDate como preferência, fallback para pubDate
+    const postDate = latest.isoDate || latest.pubDate;
+    if (!postDate) {
+      console.error('❌ Item não possui data (isoDate ou pubDate). Abortando.');
+      return;
+    }
+
+    // Converte a data para BRT e compara com hoje
+    const postDateObj = new Date(postDate);
+    if (isNaN(postDateObj.getTime())) {
+      console.error(`❌ Data inválida: ${postDate}. Abortando.`);
+      return;
+    }
+
+    const postDateBR = postDateObj.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const todayBR = new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    console.log(`📅 Data do post: ${postDateBR}`);
+    console.log(`📅 Data de hoje: ${todayBR}`);
+
+    // Só publica se a data for hoje (BRT)
+    // Permite publicar posts do mesmo dia, mesmo se publicados depois das 09:00
     if (postDateBR !== todayBR) {
       console.log(`🛑 Edição de ${postDateBR} não é de hoje (${todayBR}). Abortando.`);
       return;
@@ -84,12 +107,15 @@ async function run() {
 
     // Evita republicar o mesmo link
     const lastLink = getLastNotifiedLink();
+    console.log(`🔗 Último link publicado: ${lastLink || 'nenhum'}`);
+    
     if (latest.link === lastLink) {
-      console.log('🛑 Mesma edição já publicada hoje. Abortando.');
+      console.log('🛑 Mesma edição já publicada. Abortando.');
       return;
     }
 
     // Publica no Discord
+    console.log('📤 Enviando notificação para o Discord...');
     await notifyDiscord({
       title:   latest.title,
       summary: latest.contentSnippet || '',
