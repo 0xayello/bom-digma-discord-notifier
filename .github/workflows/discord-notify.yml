@@ -12,22 +12,22 @@ jobs:
 
     steps:
       - name: Checkout do código
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
           persist-credentials: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: '20'
 
       - name: Install dependencies
         run: npm install
 
       - name: Carregar cache do último item publicado
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: cache-last-item
         with:
           path: last_discord_item.txt
@@ -42,7 +42,7 @@ jobs:
         run: npm start
 
       - name: Salvar cache do último item publicado
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         if: always()
         with:
           path: last_discord_item.txt
