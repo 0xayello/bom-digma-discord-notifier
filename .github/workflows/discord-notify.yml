@@ -27,11 +27,13 @@ jobs:
         run: npm install
 
       - name: Carregar cache do último item publicado
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         id: cache-last-item
         with:
           path: last_discord_item.txt
-          key: last-discord-item-v1
+          key: last-discord-item-${{ github.run_id }}
+          restore-keys: |
+            last-discord-item-
 
       - name: Run notifier
         env:
@@ -42,8 +44,8 @@ jobs:
         run: npm start
 
       - name: Salvar cache do último item publicado
-        uses: actions/cache@v4
+        uses: actions/cache/save@v4
         if: always()
         with:
           path: last_discord_item.txt
-          key: last-discord-item-v1
+          key: last-discord-item-${{ github.run_id }}
