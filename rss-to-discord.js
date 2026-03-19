@@ -98,9 +98,9 @@ async function run() {
     console.log(`📅 Data do post: ${postDateBR}`);
     console.log(`📅 Data de hoje: ${todayBR}`);
 
-    // TESTE ÚNICO: pular verificação de data para testar com última edição
-    // TODO: reverter após teste
-    if (false && postDateBR !== todayBR) {
+    // Só publica se a data for hoje (BRT)
+    // Permite publicar posts do mesmo dia, mesmo se publicados depois das 09:00
+    if (postDateBR !== todayBR) {
       console.log(`🛑 Edição de ${postDateBR} não é de hoje (${todayBR}). Abortando.`);
       return;
     }
